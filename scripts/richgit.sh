@@ -6,6 +6,10 @@ TOPDIR=`readlink -f $SCRIPTS/../..`
 BRANCH="develop"
 CURL=/usr/bin/curl
 
+#MD5 - we need to trust JSON.sh and resty
+JSONSH_MD5=dec0b0e06059e4eee1e5d65620354a71
+RESTY_MD5=7b451ec4240eaaf73a102bcbf05ba5fe
+
 #Colors
 Brown="$(tput setaf 3)"
 Green="$(tput setaf 2)"
@@ -39,12 +43,18 @@ fork_all_modules() {
         if [[ "$USERNAME" != "richfaces" ]]; then
             RESULT=$((POST /repos/richfaces/$MODULE/forks -u "$USERNAME:$PASSWORD" -v) 2>&1)
             if [[ $RESULT =~ "Status: 401 Unauthorized" ]]; then
+                echo -n $Red
                 echo "Github username / password is incorrect. Exiting."
+                echo -n $NoColor
                 exit 1
-            elif [[ $RESULT =~ "Status: 201 Created" ]]; then
-                echo "Successfully forked $MODULE in Github."
+            elif [[ $RESULT =~ "Status: 202 Accepted" ]]; then
+                echo -n $Green
+                echo "Successfully forked [$Brown $MODULE $Green] in Github."
+                echo -n $NoColor
             else
-                echo "Unsure of what happened when forking $MODULE in Github. Exiting."
+                echo -n $Red
+                echo "Unsure of what happened when forking [$Brown $MODULE $Red] in Github. Exiting."
+                echo -n $NoColor
                 exit 1
             fi
         fi
@@ -52,12 +62,28 @@ fork_all_modules() {
 }
 
 checkout_all_modules() {
+    get_resty_if_required
+    . $SCRIPTS/resty
+    resty https://api.github.com
+    get_jsonsh_if_required
     pushd $TOPDIR >/dev/null
         for MODULE in $MODULES; do
             if [[ ! -d "$MODULE" ]]; then
-                git clone $QUIET "$BASE/$MODULE.git"
+                if [[ $FORK == true ]]; then
+                    RESULT=`GET /repos/richfaces/$MODULE/forks -u "$USERNAME:$PASSWORD"`
+                    URL=`echo $RESULT | $SCRIPTS/JSON.sh | awk "/\[[0-9]+,\"ssh_url\"\]\t\"git@github\.com:$USERNAME\/.*\.git\"/" | cut -f 2 | sed "s/\"//g"`
+	            echo -n $Green
+	            echo "Cloning [$Brown $MODULE $Green] from your personal fork located at [$Brown $URL $Green]."
+	            echo -n $NoColor
+                    git clone $QUIET "$URL" "$MODULE"
+                else
+	            echo -n $Green
+	            echo "Cloning [$Brown $MODULE $Green]."
+	            echo -n $NoColor
+                    git clone $QUIET "$BASE/$MODULE.git"
+                fi
             else
-                echo "Module $MODULE already exists. Skipping over it."
+                module_already_exists
                 continue
             fi
             if [[ "$USERNAME" != "richfaces" ]]; then
@@ -67,6 +93,12 @@ checkout_all_modules() {
             fi
         done
     popd >/dev/null
+}
+
+module_already_exists() {
+    echo -n $Red
+    echo "*** Module [$Green $MODULE $Red] already exists.$NoColor Skipping over it."
+    echo -n $NoColor
 }
 
 module_does_not_exist() {
@@ -133,8 +165,28 @@ EOF
 
 get_resty_if_required() {
     if [[ ! -f $SCRIPTS/resty ]]; then
-        echo "Fetching resty to allow us fork on Github."
-        curl -s -L http://github.com/micha/resty/raw/master/resty > $SCRIPTS/resty
+        echo "Fetching resty to allow us to fork on Github."
+        curl -s -L http://github.com/micha/resty/raw/58560a1161a0a31ea9263acdfbd16952757414bd/resty > $SCRIPTS/resty
+        MD5=`md5sum $SCRIPTS/resty | cut -d " " -f 1`
+        if [[ $RESTY_MD5 != $MD5 ]]; then
+            echo "resty MD5 does not match, deleting and exiting."
+            rm $SCRIPTS/resty
+            exit 1
+        fi
+    fi
+}
+
+get_jsonsh_if_required() {
+    if [[ ! -f $SCRIPTS/JSON.sh ]]; then
+        echo "Fetching JSON.sh to allow us to get our personal fork URL on Github."
+        curl -s -L https://raw.github.com/dominictarr/JSON.sh/360b592eea3b65a20a10b5110cde976b0a5e4872/JSON.sh > $SCRIPTS/JSON.sh
+        MD5=`md5sum $SCRIPTS/JSON.sh | cut -d " " -f 1`
+        if [[ $JSONSH_MD5 != $MD5 ]]; then
+            echo "JSON.sh MD5 does not match, deleting and exiting."
+            rm $SCRIPTS/JSON.sh
+            exit 1
+        fi
+        chmod +x $SCRIPTS/JSON.sh
     fi
 }
 
