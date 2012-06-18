@@ -63,6 +63,7 @@
         <version.jstl-api>1.2</version.jstl-api>
         <version.google-guava>11.0.2</version.google-guava>
         <version.validation-api>1.0.0.GA</version.validation-api>
+        <version.hibernate-validator>4.2.0.Final</version.hibernate-validator>
         <version.cssparser>0.9.5</version.cssparser>
         <version.oscache>2.3</version.oscache>
         <version.jbosscache>3.2.5.GA</version.jbosscache>
@@ -70,6 +71,7 @@
         <version.atmosphere>0.8.4</version.atmosphere>
         <version.jms-api>1.1-rev-1</version.jms-api>
         <version.rewrite>1.0.4.Final</version.rewrite>
+        <version.cdi-api>1.0-SP4</version.cdi-api>
         
         <!-- Release repositories -->
         <jboss.releases.repo.url>https://repository.jboss.org/nexus/service/local/staging/deploy/maven2/</jboss.releases.repo.url>
@@ -261,6 +263,11 @@
                 <version>${version.validation-api}</version>
             </dependency>
             <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${version.hibernate-validator}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.ocpsoft.rewrite</groupId>
                 <artifactId>rewrite-servlet</artifactId>
                 <version>${version.rewrite}</version>
@@ -306,6 +313,14 @@
                 <artifactId>jms-api</artifactId>
                 <version>${version.jms-api}</version>
             </dependency>
+            
+            <!-- CDI API -->
+            <dependency>
+                <groupId>javax.enterprise</groupId>
+                <artifactId>cdi-api</artifactId>
+                <version>${version.cdi-api}</version>
+            </dependency>
+            
         </dependencies>
     </dependencyManagement>
 
