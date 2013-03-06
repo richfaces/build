@@ -106,7 +106,7 @@ public class Deployment {
                 .up();
 
         // TODO versions have to be loaded from POM
-        addMavenDependency("com.google.guava:guava", "net.sourceforge.cssparser:cssparser:0.9.5", "org.w3c.css:sac:1.3");
+        addMavenDependency("com.google.guava:guava:11.0.2", "net.sourceforge.cssparser:cssparser:0.9.5", "org.w3c.css:sac:1.3");
     }
 
     /**
@@ -185,10 +185,10 @@ public class Deployment {
      * Resolves Maven dependency and writes it to the cache, so it can be reused next run
      */
     private void resolveMavenDependency(String missingDependency, File dir) {
-        final JavaArchive[] dependencies = Maven.resolver().loadPomFromFile("pom.xml").resolve(missingDependency)
-            .withTransitivity().as(JavaArchive.class);
+        final JavaArchive[] dependencies = Maven.resolver().resolve(missingDependency)
+            .withClassPathResolution(false).withTransitivity().as(JavaArchive.class);
 
-        for (JavaArchive archive : dependencies) {
+        for (final JavaArchive archive : dependencies) {
             dir.mkdirs();
             final File outputFile = new File(dir, archive.getName());
             archive.as(ZipExporter.class).exportTo(outputFile, true);
