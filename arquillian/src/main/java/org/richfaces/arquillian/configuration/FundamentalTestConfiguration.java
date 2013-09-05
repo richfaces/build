@@ -6,11 +6,15 @@ import org.jboss.arquillian.config.descriptor.api.ArquillianDescriptor;
 import org.jboss.arquillian.drone.configuration.ConfigurationMapper;
 import org.jboss.arquillian.drone.spi.DroneConfiguration;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 public class FundamentalTestConfiguration implements DroneConfiguration<FundamentalTestConfiguration> {
 
     private String richfacesVersion;
     private Boolean servletContainerSetup;
-    private String currentBuildRichfacesVersion = "4.3.4-SNAPSHOT";
+    private String currentBuildRichfacesVersion = "";
     private String jsfImplementation;
     private String containerHome;
     private String containerDistribution;
@@ -26,6 +30,15 @@ public class FundamentalTestConfiguration implements DroneConfiguration<Fundamen
      */
     public String getRichFacesVersion() {
         if (richfacesVersion == null || richfacesVersion.isEmpty()) {
+            Properties prop = new Properties();
+            try {
+                //load a properties file
+                prop.load(new FileInputStream("version.properties"));
+                //get the property value and print it out
+                currentBuildRichfacesVersion = prop.getProperty("project.version.property");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
             return currentBuildRichfacesVersion;
         }
         return richfacesVersion;
